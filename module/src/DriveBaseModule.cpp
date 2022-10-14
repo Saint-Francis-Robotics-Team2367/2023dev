@@ -67,7 +67,7 @@ void DriveBaseModule::arcadeDrive(double xSpeedi, double zRotationi) {
 }
 
 void DriveBaseModule::gyroDriving() {
-  float rightStickOutput = -1.0 * driverStick->GetRawAxis(4);
+  float rightStickOutput = driverStick->GetRawAxis(4);
   rightStickPID.SetSetpoint(rightStickOutput);
   arcadeDrive(driverStick->GetRawAxis(1),  GetOutput());
   frc::SmartDashboard::PutNumber("output", GetOutput());
@@ -106,8 +106,8 @@ bool DriveBaseModule::PIDDrive(float totalFeet, bool keepVelocity) {
 
       setpoint = (currentPosition * 12);  //amt of rotations needed; / (PI * wheelDiameter) (don't need when have conversion factor)
       frc::SmartDashboard::PutNumber("setpoint", setpoint);
-      lPID.SetReference(std::copysign(setpoint, totalFeet) * (-1), rev::CANSparkMax::ControlType::kPosition); //setpoint uses encoder
-      rPID.SetReference(std::copysign(setpoint, totalFeet) * (-1), rev::CANSparkMax::ControlType::kPosition); //everything in abs, so will go backwards
+      lPID.SetReference(std::copysign(setpoint, totalFeet), rev::CANSparkMax::ControlType::kPosition); //setpoint uses encoder
+      rPID.SetReference(std::copysign(setpoint, totalFeet), rev::CANSparkMax::ControlType::kPosition); //everything in abs, so will go backwards
       prevTime = frc::Timer::GetFPGATimestamp().value();
       frc::SmartDashboard::PutNumber("prevTime", prevTime);
     }
@@ -139,8 +139,8 @@ bool DriveBaseModule::PIDDrive(float totalFeet, bool keepVelocity) {
 
         setpoint = (currentPosition * 12);  //amt of rotations needed; / (PI * wheelDiameter) (don't need when have conversion factor)
         frc::SmartDashboard::PutNumber("setpoint", setpoint);
-        lPID.SetReference(std::copysign(setpoint, totalFeet) * (-1), rev::CANSparkMax::ControlType::kPosition); //setpoint uses encoder
-        rPID.SetReference(std::copysign(setpoint, totalFeet) * (-1), rev::CANSparkMax::ControlType::kPosition);
+        lPID.SetReference(std::copysign(setpoint, totalFeet), rev::CANSparkMax::ControlType::kPosition); //setpoint uses encoder
+        rPID.SetReference(std::copysign(setpoint, totalFeet), rev::CANSparkMax::ControlType::kPosition);
         prevTime = frc::Timer::GetFPGATimestamp().value();
         frc::SmartDashboard::PutNumber("prevTime", prevTime);
     }
@@ -194,13 +194,12 @@ bool DriveBaseModule::PIDTurn(float angle, float radius, bool keepVelocity) { //
       if(radius < 0) {
         multiplier = -1;
       }
-
        if(angle > 0) { //angle if reversed outer and inner setpoint reverses, if radius changes change sign of thing,
-          lPID.SetReference((-1)  * multiplier * outerSetpoint, rev::CANSparkMax::ControlType::kPosition);
-          rPID.SetReference((-1)  * multiplier * innerSetpoint, rev::CANSparkMax::ControlType::kPosition);
+          lPID.SetReference(multiplier * outerSetpoint, rev::CANSparkMax::ControlType::kPosition);
+          rPID.SetReference(multiplier * innerSetpoint, rev::CANSparkMax::ControlType::kPosition);
         } else {
-          lPID.SetReference((-1)  * multiplier * innerSetpoint, rev::CANSparkMax::ControlType::kPosition);
-          rPID.SetReference((-1)  * multiplier * outerSetpoint, rev::CANSparkMax::ControlType::kPosition);
+          lPID.SetReference(multiplier * innerSetpoint, rev::CANSparkMax::ControlType::kPosition);
+          rPID.SetReference(multiplier * outerSetpoint, rev::CANSparkMax::ControlType::kPosition);
         } //figure this out
 
 
@@ -208,6 +207,8 @@ bool DriveBaseModule::PIDTurn(float angle, float radius, bool keepVelocity) { //
       frc::SmartDashboard::PutNumber("prevTime", prevTime);
     }
   } else {
+
+    gyroSource.ahrs->SetAngleAdjustment(fmod(gyroSource.ahrs->GetAngle(), 360));
      while(fabs(currentPosition) < fabs(endpoint)){
         if(stopAuto) {
           break;
@@ -233,7 +234,23 @@ bool DriveBaseModule::PIDTurn(float angle, float radius, bool keepVelocity) { //
       if(fabs(currentPosition) > fabs(endpoint)) {
         currentPosition = endpoint;
       }
-      //same as other
+
+      //dynamic angle adjustment (instead of having a gyro adjust at the end)
+      double currAngle = fmod(gyroSource.ahrs->GetAngle(), 360) + gyroSource.ahrs->GetAngleAdjustment(); //set before while loop
+      frc::SmartDashboard::PutNumber("curr Angle", currAngle);
+
+      double theoreticalAngle = (currentPosition / endpoint) * angle;
+      frc::SmartDashboard::PutNumber("theoretical Angle", theoreticalAngle);
+
+      if(fabs(currAngle - theoreticalAngle) > 3) { //if offset more than 3 recalculate endpoint
+          double adjustment = fabs(currAngle - theoreticalAngle);
+          if(theoreticalAngle > currAngle)
+            adjustment *= -1;
+          frc::SmartDashboard::PutNumber("adjustment", adjustment);
+          double newEndpoint = (fabs(angle  + adjustment) / 360.0) * (fabs(radius) + centerToWheel) * (2 * PI); //fabs of angle, same for radius so can turn negative, have an if statement to change dir later
+          //endpoint = newEndpoint
+          frc::SmartDashboard::PutNumber("Endpoint Diff", newEndpoint - endpoint);
+      } 
     
       double outerSetpoint = (currentPosition * 12); // for now this is ticks (maybe rotations / gearRatio if not then) //change wheel diameter, might not need
       double innerSetpoint = ((radius - centerToWheel)/(radius + centerToWheel)) * outerSetpoint;
@@ -247,11 +264,11 @@ bool DriveBaseModule::PIDTurn(float angle, float radius, bool keepVelocity) { //
       } //if radius is negative it goes three times the amount it's supposed to go, so divide by 3, works for pos and neg angle though
 
        if(angle > 0) { //angle if reversed outer and inner setpoint reverses, if radius changes change sign of thing,
-          lPID.SetReference((-1)  * multiplier * outerSetpoint, rev::CANSparkMax::ControlType::kPosition);
-          rPID.SetReference((-1)  * multiplier * innerSetpoint, rev::CANSparkMax::ControlType::kPosition);
+          lPID.SetReference(multiplier * outerSetpoint, rev::CANSparkMax::ControlType::kPosition);
+          rPID.SetReference(multiplier * innerSetpoint, rev::CANSparkMax::ControlType::kPosition);
         } else {
-          lPID.SetReference((-1)  * multiplier * innerSetpoint, rev::CANSparkMax::ControlType::kPosition);
-          rPID.SetReference((-1)  * multiplier * outerSetpoint, rev::CANSparkMax::ControlType::kPosition);
+          lPID.SetReference(multiplier * innerSetpoint, rev::CANSparkMax::ControlType::kPosition);
+          rPID.SetReference(multiplier * outerSetpoint, rev::CANSparkMax::ControlType::kPosition);
         } //figure this out
 
 
@@ -260,7 +277,7 @@ bool DriveBaseModule::PIDTurn(float angle, float radius, bool keepVelocity) { //
     }
   }
 
- 
+  //could call gyroDrive adjustment if angle is off, instead of having the dynamic thingy [takes longer, but super accurate] (did this last year)
   frc::SmartDashboard::PutBoolean("In PIDTurn Function", false);
   return true;
 }
@@ -315,6 +332,7 @@ void DriveBaseModule::autonomousSequence() {
 
      robPos.x += delta.x;
      robPos.y += delta.y;
+     //check with gyro get displacement
      PIDTurn(theta, 0, false); //expiriment with true
      PIDDrive(d, false);
      lineIndex++;
@@ -364,18 +382,27 @@ void DriveBaseModule::run() {
     auto nextRun = std::chrono::steady_clock::now() + std::chrono::milliseconds(20);
     frc::SmartDashboard::PutNumber("timesRun", ++counter);
 
+
     //need mutex to stop
 
     if(state == 'a') { //ik I have access to isAutonomous
       stopAuto = false;
       if(test) {
-          autonomousSequence();
+          // autonomousSequence();
+          // PIDDrive(3, false);
+          // PIDDrive(-3, false);
+          PIDTurn(30, 0, false);
+          // PIDTurn(360, 0, false);
+          // PIDTurn(-360, 0, false);
         test = false;
       }
       
     } else {
       //perioidic routines
       gyroDriving();
+
+     
+     
       test = true;
       stopAuto = true;
     }

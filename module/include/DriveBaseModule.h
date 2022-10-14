@@ -27,8 +27,8 @@
 #define motorInitMaxCurrent 100 // The initial max current setting
 #define motorInitRatedCurrent 60 // The inital rated current settings
 #define motorInitLimitCycles 2000 // The inital number of allowed ms at peak current
-#define lInvert true // Inversion setings for sides (invert this if opposite side)
-#define rInvert false 
+#define lInvert false // Inversion setings for sides (invert this if opposite side)
+#define rInvert true 
 
 #define xDeadband 0.025
 #define yDeadband 0.025
