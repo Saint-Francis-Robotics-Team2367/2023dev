@@ -6,10 +6,8 @@
 
 // // All Module Includes
 #include "DriveBaseModule.h"
-#include "TshirtCannon.h"
 
 DriveBaseModule drive;
-TshirtCannon tshirtCannon;
 //moved instantiation to h file
 
 

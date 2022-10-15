@@ -31,8 +31,8 @@
 #define indexID1 11
 #define indexID2 13
 #define lMotorLeaderID 1
-// #define lMotorFollowerID 16
+#define lMotorFollowerID 16
 #define rMotorLeaderID 15
-// #define rMotorFollowerID 3
+#define rMotorFollowerID 3
 // #define testLeft 14
 // #define testRight 1
