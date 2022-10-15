@@ -52,6 +52,7 @@ void Robot::DisabledPeriodic() {
 
 void Robot::TestInit()
 {
+  drive.state = 'u';
 }
 
 void Robot::TestPeriodic()

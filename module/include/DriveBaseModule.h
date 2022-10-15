@@ -19,9 +19,9 @@
 #define driverStickPort 0
 #define operatorStickPort 1
 
-#define PIDProportional 0.39
+#define PIDProportional 1
 #define PIDIntegral 0
-#define PIDDerivative 2.13
+#define PIDDerivative 0
 #define PIDIZone 0
 
 #define motorInitMaxCurrent 100 // The initial max current setting
@@ -35,15 +35,16 @@
 #define centerToWheel 1.08333 //Center of the robot to outer side of the wheel?
 #define PI 3.141592654
 #define wheelDiameter 4 //inches
+#define maxOffsetAngle 1
 
 // #define maxAcc = 7.0
 // #define maxVelocity = 21.0
 
 class DriveBaseModule: public frc::PIDOutput{ //needed for gyroPIDDrive implementation
-  double maxAcc =  7.0;
-  double maxVelocity = 21.0;
+  double maxAcc =  20.0;
+  double maxVelocity = 30.0;
   double currentVelocity = 0;
-  
+  double robTheta = 0;
   
  
   frc::Joystick* driverStick = new frc::Joystick(driverStickPort);
@@ -132,8 +133,12 @@ class DriveBaseModule: public frc::PIDOutput{ //needed for gyroPIDDrive implemen
   double gyroOffsetVal = 0;
 
   double getGyroAngleAuto() {
-    return fabs(fabs(gyroSource.ahrs->GetAngle()) - fabs(gyroOffsetVal));
+    return fabs(gyroSource.ahrs->GetAngle() - gyroOffsetVal); //remove fabs in beggining
   }
+
+  void PIDTuning();
+  double delta =10;
+  double tuningPrevTime = 0;
 
   private:
 	    double m_out;

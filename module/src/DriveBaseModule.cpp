@@ -75,6 +75,59 @@ void DriveBaseModule::gyroDriving() {
 
 }
 
+void DriveBaseModule::PIDTuning() {
+  //double prevTime = frc::Timer::GetFPGATimestamp().value();
+  double currentLeftLead = lMotor->GetOutputCurrent();
+  double currentRightLead = rMotor->GetOutputCurrent();
+  frc::SmartDashboard::PutNumber("Total Current", currentLeftLead+currentRightLead);
+
+  //Making it so you can manually set m_p and positionTotal: m_p is essential with PID, change by an order of magnitude to start run
+  double m_P = frc::SmartDashboard::GetNumber("Pd", 1);
+  //bool isNegative;
+  lPID.SetP(m_P);
+  rPID.SetP(m_P);
+  frc::SmartDashboard::PutNumber("Pd", m_P);
+
+  double m_D = frc::SmartDashboard::GetNumber("D Value", 0);
+  //bool isNegative;
+  lPID.SetD(m_D);
+  rPID.SetD(m_D);
+  frc::SmartDashboard::PutNumber("D Value", m_D);
+
+  double m_I = frc::SmartDashboard::GetNumber("I Value", 0);
+  //bool isNegative;
+  lPID.SetI(m_I);
+  rPID.SetI(m_I);
+  frc::SmartDashboard::PutNumber("I Value", m_I);
+
+ double I_Zone = frc::SmartDashboard::GetNumber("I_Zone", 0);
+  //bool isNegative;
+  lPID.SetIZone(I_Zone);
+  rPID.SetIZone(I_Zone);
+  frc::SmartDashboard::PutNumber("I_Zone", I_Zone);
+
+  lPID.SetIZone(I_Zone);
+
+  double waitTime = frc::SmartDashboard::GetNumber("waitTime", 4);
+  frc::SmartDashboard::PutNumber("waitTime", waitTime);
+
+  double currTime = frc::Timer::GetFPGATimestamp().value();
+  frc::SmartDashboard::PutNumber("currTime", currTime);
+  frc::SmartDashboard::PutNumber("Setpoint", delta);
+  if(currTime > tuningPrevTime + waitTime) {
+   
+      lPID.SetReference(delta, rev::ControlType::kPosition);
+      rPID.SetReference(delta, rev::ControlType::kPosition);
+      delta = delta * -1.0;
+ 
+      frc::SmartDashboard::PutNumber("Right Encoder", rEncoder.GetPosition());
+      frc::SmartDashboard::PutNumber("Left Encoder", lEncoder.GetPosition());
+
+      tuningPrevTime = frc::Timer::GetFPGATimestamp().value();
+      frc::SmartDashboard::PutNumber("prev time", tuningPrevTime);
+  }
+}
+
 bool DriveBaseModule::PIDDrive(float totalFeet, bool keepVelocity) {
   //forward movement only *implement backwards movement with if statement if necessary
   float timeElapsed, distanceToDeccelerate, setpoint = 0.0; //currentPosition is the set point
@@ -158,11 +211,11 @@ bool DriveBaseModule::PIDTurn(float angle, float radius, bool keepVelocity) { //
   double currentPosition = 0, endpoint = 0; //currentVelocity in class variables
   float prevTime = frc::Timer::GetFPGATimestamp().value();
 
-  if(radius < 0) { //need to figure out negative radius thing!!!! prolly abs thing
-    angle /= 3; //for some reason with a negative radius it goes three times the length, will need some debugging, but this fixes it (prolyl smtng with absolute values)
-  } //essentially don't use negative radius's, kinda weird, but we should prolly figure it out
+  endpoint = (fabs(angle) / 360.0) * fabs((radius) + centerToWheel) * (2 * PI); //move fabs to be outside of fabs(radius + centerToWheel)!!!
 
-  endpoint = (fabs(angle) / 360.0) * (fabs(radius) + centerToWheel) * (2 * PI); //fabs of angle, same for radius so can turn negative, have an if statement to change dir later
+  bool hasRecalibrated = false;
+  gyroOffsetVal = gyroSource.ahrs->GetAngle();
+  //fabs(radius + centerToWheel)
   frc::SmartDashboard::PutNumber("endpoint", endpoint);
 
   if(keepVelocity) {
@@ -184,8 +237,32 @@ bool DriveBaseModule::PIDTurn(float angle, float radius, bool keepVelocity) { //
         currentPosition = endpoint;
       }
 
+         double currAngle = std::copysign(getGyroAngleAuto(), angle); //set before while loop
+        frc::SmartDashboard::PutNumber("curr Angle", currAngle);
+
+        double theoreticalAngle = (currentPosition / endpoint) * angle; //shouldn't use aggregate angle, that's accounted for in endpoint?, or should
+        frc::SmartDashboard::PutNumber("theoretical Angle", theoreticalAngle);
+
+
+      //this is a test, doesn't work
+
+      if(!hasRecalibrated && (angle * 0.9 < theoreticalAngle))
+      if(fabs(currAngle - theoreticalAngle) > 1) { //if offset more than 3 recalculate endpoint
+          double adjustment = fabs(theoreticalAngle - currAngle);
+          if(currAngle > theoreticalAngle)
+            adjustment *= -1;
+          //frc::SmartDashboard::PutNumber("adjustment", adjustment); //remove fabs here for agg angle + adjustment, and remove for radius
+          double newEndpoint = (fabs(angle  + (adjustment)) / 360.0) * fabs(radius + centerToWheel) * (2 * PI); //fabs of angle, same for radius so can turn negative, have an if statement to change dir later
+          //angle += adjustment;
+          frc::SmartDashboard::PutNumber("agg angle", angle);
+          endpoint = newEndpoint;
+          frc::SmartDashboard::PutNumber("Endpoint Diff", newEndpoint - endpoint);
+          frc::SmartDashboard::PutNumber("NEW endpoint", newEndpoint);
+          hasRecalibrated = true;
+      } 
+
       double outerSetpoint = (currentPosition * 12); // for now this is ticks (maybe rotations / gearRatio if not then) //change wheel diameter, might not need
-      double innerSetpoint = ((fabs(radius) - centerToWheel)/(fabs(radius) + centerToWheel)) * outerSetpoint; //fabs radius for other things
+      double innerSetpoint = fabs((radius) - centerToWheel)/(fabs((radius) + centerToWheel)) * outerSetpoint; //fabs radius for other things
       
       frc::SmartDashboard::PutNumber("outerSet", outerSetpoint);
       frc::SmartDashboard::PutNumber("innerSet", innerSetpoint);
@@ -210,12 +287,12 @@ bool DriveBaseModule::PIDTurn(float angle, float radius, bool keepVelocity) { //
 
     // double startingAngle = fabs(fmod(gyroSource.ahrs->GetAngle(), 360)); //get starting angle
    // gyroSource.ahrs->SetAngleAdjustment(0);
-    gyroOffsetVal = gyroSource.ahrs->GetAngle();
-    double aggregateAngle = angle;
+    
+    //double aggregateAngle = angle;
 
     frc::SmartDashboard::PutNumber("gyro offset", gyroOffsetVal);
     // initGyroAuto();
-     while(fabs(currentPosition) < fabs(endpoint)){
+     while(fabs(currentPosition) < fabs(endpoint)){ 
         if(stopAuto) {
           break;
         }
@@ -245,28 +322,25 @@ bool DriveBaseModule::PIDTurn(float angle, float radius, bool keepVelocity) { //
       double currAngle = std::copysign(getGyroAngleAuto(), angle); //set before while loop
       frc::SmartDashboard::PutNumber("curr Angle", currAngle);
 
-      double theoreticalAngle = (currentPosition / endpoint) * angle; //before was angle
+      double theoreticalAngle = (currentPosition / endpoint) * angle; //shouldn't use aggregate angle, that's accounted for in endpoint?, or should
       frc::SmartDashboard::PutNumber("theoretical Angle", theoreticalAngle);
 
 
       //this is a test, doesn't work
+
+      if(!hasRecalibrated && (fabs(angle * 0.95) < fabs(theoreticalAngle)))
       if(fabs(currAngle - theoreticalAngle) > 1) { //if offset more than 3 recalculate endpoint
-          double adjustment = fabs(currAngle - theoreticalAngle);
-          if(theoreticalAngle > currAngle)
+          double adjustment = fabs(theoreticalAngle - currAngle);
+          if(currAngle > theoreticalAngle)
             adjustment *= -1;
-          frc::SmartDashboard::PutNumber("adjustment", adjustment);
-          double newEndpoint = std::copysign((fabs(aggregateAngle  + adjustment) / 360.0) * (fabs(radius) + centerToWheel) * (2 * PI), endpoint); //fabs of angle, same for radius so can turn negative, have an if statement to change dir later
-          if(angle < 0) {
-            aggregateAngle -= adjustment;
-          } else {
-            aggregateAngle += adjustment;
-          }
-          
-          frc::SmartDashboard::PutNumber("agg angle", aggregateAngle);
+          //frc::SmartDashboard::PutNumber("adjustment", adjustment); //remove fabs here for agg angle + adjustment, and remove for radius
+          double newEndpoint = (fabs(angle  + (adjustment)) / 360.0) * fabs(radius + centerToWheel) * (2 * PI); //fabs of angle, same for radius so can turn negative, have an if statement to change dir later
+          //angle += adjustment;
+          frc::SmartDashboard::PutNumber("agg angle", angle);
           endpoint = newEndpoint;
           frc::SmartDashboard::PutNumber("Endpoint Diff", newEndpoint - endpoint);
-            frc::SmartDashboard::PutNumber("NEW endpoint", newEndpoint);
-
+          frc::SmartDashboard::PutNumber("NEW endpoint", newEndpoint);
+          hasRecalibrated = true;
       } 
     
       double outerSetpoint = (currentPosition * 12); // for now this is ticks (maybe rotations / gearRatio if not then) //change wheel diameter, might not need
@@ -306,29 +380,40 @@ void DriveBaseModule::initPath() {
   robPos.y = 0;
 
   pathPoint point1; //example
-  point1.x = 10;
-  point1.y = 10; 
+  point1.x = 5;
+  point1.y = 5; 
   straightLinePoints.push_back(point1);
 
-  radiusTurnPoint rpoint1;
-  rpoint1.radius = 3; //neg
-  rpoint1.angle = 30;
-  radiusTurnPoints.push_back(rpoint1);
+  // radiusTurnPoint rpoint1;
+  // rpoint1.radius = 3; //neg
+  // rpoint1.angle = 180;
+  // radiusTurnPoints.push_back(rpoint1);
 
-  radiusTurnPoint rpoint2;
-  rpoint2.radius = 0; //neg
-  rpoint2.angle = 330;
-  radiusTurnPoints.push_back(rpoint2);
+  // radiusTurnPoint rpoint2;
+  // rpoint2.radius = 0; //neg
+  // rpoint2.angle = -180;
+  // radiusTurnPoints.push_back(rpoint2);
+
 
   pathPoint point2; //example
-  point1.x = 0;
-  point1.y = 0; 
+  point2.x = 0;
+  point2.y = 10; 
   straightLinePoints.push_back(point2);
   //calculate x and y robot manually
 
+  pathPoint point3; //example
+  point3.x = -5;
+  point3.y = 5; 
+  straightLinePoints.push_back(point3);
+
+  pathPoint point4; //example
+  point4.x = 0;
+  point4.y = 0; 
+  straightLinePoints.push_back(point4);
+
   pathOrder.push_back(true);
-  pathOrder.push_back(false);
-  pathOrder.push_back(false);
+  pathOrder.push_back(true);
+  pathOrder.push_back(true);
   pathOrder.push_back(true);
 }
 
@@ -358,17 +443,22 @@ void DriveBaseModule::autonomousSequence() {
       // // delta.y = delta.y + unitDir.y * coordOffset;
 
      theta = atan2(delta.x, delta.y) * (180/(3.14159265)); 
+     frc::SmartDashboard::PutNumber("theta", theta);
+      frc::SmartDashboard::PutNumber("d", d);
 
      robPos.x += delta.x;
      robPos.y += delta.y;
+
+    theta = theta - robTheta; //robTheta inited to zero
+    robTheta += theta;
      //check with gyro get displacement
      PIDTurn(theta, 0, false); //expiriment with true
      PIDDrive(d, false);
      lineIndex++;
 
     } else {
-      robPos.x += 2; //do math later !!!!
-      robPos.y += 2;  //do math later !!!!
+      robPos.x += 0; //do math later !!!!
+      robPos.y += 0;  //do math later !!!!
       PIDTurn(radiusTurnPoints.at(curveIndex).angle, radiusTurnPoints.at(curveIndex).radius, false);
       curveIndex++;
     }
@@ -408,7 +498,7 @@ void DriveBaseModule::run() {
   bool test = true;
   int counter = 0;
   while(true) { 
-    auto nextRun = std::chrono::steady_clock::now() + std::chrono::milliseconds(20);
+    auto nextRun = std::chrono::steady_clock::now() + std::chrono::milliseconds(5); //change milliseconds at telop
     frc::SmartDashboard::PutNumber("timesRun", ++counter);
 
 
@@ -417,31 +507,29 @@ void DriveBaseModule::run() {
     if(state == 'a') { //ik I have access to isAutonomous
       stopAuto = false;
       if(test) {
-          // autonomousSequence();
-          // PIDDrive(3, false);
-          // PIDDrive(-3, false);
-          //PIDTurn(30, 2, false);
-          // PIDTurn(-30, 2, false);
-          // PIDTurn(-30, 2, false);
-          //PIDTurn(180, 0, false);
-          // PIDTurn(360, 0, false);
-          // PIDTurn(360, 0, false);
-          // PIDTurn(360, 0, false);
-          PIDTurn(-360, 0, false);
-          //PIDTurn(360, 2, false);
-         // autonomousSequence();
+          autonomousSequence();
+          // PIDTurn(180, 3, false);
+          // PIDTurn(-360, 0, false);
         test = false;
       }
       
     } else {
-      //perioidic routines
-      gyroDriving();
-
-     
-     
       test = true;
       stopAuto = true;
     }
+
+    if(state == 't') {
+      //perioidic routines
+      gyroDriving();
+      test = true;
+      stopAuto = true;
+    }
+
+    if(state == 'u') {
+     PIDTuning();
+    }
+
+  
 
     //add tuning ones
     std::this_thread::sleep_until(nextRun);
