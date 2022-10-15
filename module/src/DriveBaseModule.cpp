@@ -7,6 +7,12 @@ bool DriveBaseModule::initDriveMotor(rev::CANSparkMax* motor, rev::CANSparkMax* 
   return motor->GetLastError() == rev::REVLibError::kOk;
 }
 
+bool DriveBaseModule::initDriveMotor(rev::CANSparkMax* motor, bool invert) {
+  motor->SetIdleMode(rev::CANSparkMax::IdleMode::kBrake);
+  motor->SetInverted(invert);
+  return motor->GetLastError() == rev::REVLibError::kOk;
+}
+
 bool DriveBaseModule::setPowerBudget(rev::CANSparkMax* motor, float iPeak, float iRated, int limitCycles) {
   motor->SetSmartCurrentLimit(iRated);
   motor->SetSecondaryCurrentLimit(iPeak, limitCycles);
@@ -16,10 +22,11 @@ bool DriveBaseModule::setPowerBudget(rev::CANSparkMax* motor, float iPeak, float
 bool DriveBaseModule::setDriveCurrLimit(float iPeak, float iRated, int limitCycles) {
   bool setlFront = setPowerBudget(lMotor, iPeak, iRated, limitCycles);
   bool setrFront = setPowerBudget(rMotor, iPeak, iRated, limitCycles);
-  bool setlBack = setPowerBudget(lMotorFollower, iPeak, iRated, limitCycles);
-  bool setrBack = setPowerBudget(rMotorFollower, iPeak, iRated, limitCycles);
+//  bool setlBack = setPowerBudget(lMotorFollower, iPeak, iRated, limitCycles);
+//  bool setrBack = setPowerBudget(rMotorFollower, iPeak, iRated, limitCycles);
 
-  return setlFront && setrFront && setlBack && setrBack; // Failure on false
+  return setlFront && setrFront; // Failure on false
+//  return setlFront && setrFront && setlBack && setrBack; // Failure on false
 }
 
 void DriveBaseModule::LimitRate(double& s, double& t) {
@@ -332,7 +339,8 @@ void DriveBaseModule::autonomousSequence() {
 
 
 void DriveBaseModule::runInit() {
-  if (!(initDriveMotor(lMotor, lMotorFollower, lInvert) && initDriveMotor(rMotor, rMotorFollower, rInvert))) {
+  if (!(initDriveMotor(lMotor, lInvert) && initDriveMotor(rMotor, rInvert))) {
+//  if (!(initDriveMotor(lMotor, lMotorFollower, lInvert) && initDriveMotor(rMotor, rMotorFollower, rInvert))) {
     frc::SmartDashboard::PutBoolean("Drive Motor Inits", false);
   }
 
