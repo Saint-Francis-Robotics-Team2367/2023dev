@@ -69,7 +69,7 @@ void DriveBaseModule::arcadeDrive(double xSpeedi, double zRotationi) {
 void DriveBaseModule::gyroDriving() {
   float rightStickOutput = driverStick->GetRawAxis(4);
   rightStickPID.SetSetpoint(rightStickOutput);
-  arcadeDrive(driverStick->GetRawAxis(1),  GetOutput());
+  arcadeDrive(driverStick->GetRawAxis(1) * (-1),  GetOutput());
   frc::SmartDashboard::PutNumber("output", GetOutput());
   frc::SmartDashboard::PutNumber("gyro", gyroSource.GetRate());
 
@@ -208,7 +208,13 @@ bool DriveBaseModule::PIDTurn(float angle, float radius, bool keepVelocity) { //
     }
   } else {
 
-    gyroSource.ahrs->SetAngleAdjustment(fmod(gyroSource.ahrs->GetAngle(), 360));
+    // double startingAngle = fabs(fmod(gyroSource.ahrs->GetAngle(), 360)); //get starting angle
+   // gyroSource.ahrs->SetAngleAdjustment(0);
+    gyroOffsetVal = gyroSource.ahrs->GetAngle();
+    double aggregateAngle = angle;
+
+    frc::SmartDashboard::PutNumber("gyro offset", gyroOffsetVal);
+    // initGyroAuto();
      while(fabs(currentPosition) < fabs(endpoint)){
         if(stopAuto) {
           break;
@@ -236,20 +242,31 @@ bool DriveBaseModule::PIDTurn(float angle, float radius, bool keepVelocity) { //
       }
 
       //dynamic angle adjustment (instead of having a gyro adjust at the end)
-      double currAngle = fmod(gyroSource.ahrs->GetAngle(), 360) + gyroSource.ahrs->GetAngleAdjustment(); //set before while loop
+      double currAngle = std::copysign(getGyroAngleAuto(), angle); //set before while loop
       frc::SmartDashboard::PutNumber("curr Angle", currAngle);
 
-      double theoreticalAngle = (currentPosition / endpoint) * angle;
+      double theoreticalAngle = (currentPosition / endpoint) * angle; //before was angle
       frc::SmartDashboard::PutNumber("theoretical Angle", theoreticalAngle);
 
-      if(fabs(currAngle - theoreticalAngle) > 3) { //if offset more than 3 recalculate endpoint
+
+      //this is a test, doesn't work
+      if(fabs(currAngle - theoreticalAngle) > 1) { //if offset more than 3 recalculate endpoint
           double adjustment = fabs(currAngle - theoreticalAngle);
           if(theoreticalAngle > currAngle)
             adjustment *= -1;
           frc::SmartDashboard::PutNumber("adjustment", adjustment);
-          double newEndpoint = (fabs(angle  + adjustment) / 360.0) * (fabs(radius) + centerToWheel) * (2 * PI); //fabs of angle, same for radius so can turn negative, have an if statement to change dir later
-          //endpoint = newEndpoint
+          double newEndpoint = std::copysign((fabs(aggregateAngle  + adjustment) / 360.0) * (fabs(radius) + centerToWheel) * (2 * PI), endpoint); //fabs of angle, same for radius so can turn negative, have an if statement to change dir later
+          if(angle < 0) {
+            aggregateAngle -= adjustment;
+          } else {
+            aggregateAngle += adjustment;
+          }
+          
+          frc::SmartDashboard::PutNumber("agg angle", aggregateAngle);
+          endpoint = newEndpoint;
           frc::SmartDashboard::PutNumber("Endpoint Diff", newEndpoint - endpoint);
+            frc::SmartDashboard::PutNumber("NEW endpoint", newEndpoint);
+
       } 
     
       double outerSetpoint = (currentPosition * 12); // for now this is ticks (maybe rotations / gearRatio if not then) //change wheel diameter, might not need
@@ -297,10 +314,22 @@ void DriveBaseModule::initPath() {
   rpoint1.radius = 3; //neg
   rpoint1.angle = 30;
   radiusTurnPoints.push_back(rpoint1);
+
+  radiusTurnPoint rpoint2;
+  rpoint2.radius = 0; //neg
+  rpoint2.angle = 330;
+  radiusTurnPoints.push_back(rpoint2);
+
+  pathPoint point2; //example
+  point1.x = 0;
+  point1.y = 0; 
+  straightLinePoints.push_back(point2);
   //calculate x and y robot manually
 
   pathOrder.push_back(true);
   pathOrder.push_back(false);
+  pathOrder.push_back(false);
+  pathOrder.push_back(true);
 }
 
 
@@ -391,9 +420,16 @@ void DriveBaseModule::run() {
           // autonomousSequence();
           // PIDDrive(3, false);
           // PIDDrive(-3, false);
-          PIDTurn(30, 0, false);
+          //PIDTurn(30, 2, false);
+          // PIDTurn(-30, 2, false);
+          // PIDTurn(-30, 2, false);
+          //PIDTurn(180, 0, false);
           // PIDTurn(360, 0, false);
-          // PIDTurn(-360, 0, false);
+          // PIDTurn(360, 0, false);
+          // PIDTurn(360, 0, false);
+          PIDTurn(-360, 0, false);
+          //PIDTurn(360, 2, false);
+         // autonomousSequence();
         test = false;
       }
       

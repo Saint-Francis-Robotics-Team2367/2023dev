@@ -129,6 +129,12 @@ class DriveBaseModule: public frc::PIDOutput{ //needed for gyroPIDDrive implemen
     return m_out;
   }
 
+  double gyroOffsetVal = 0;
+
+  double getGyroAngleAuto() {
+    return fabs(fabs(gyroSource.ahrs->GetAngle()) - fabs(gyroOffsetVal));
+  }
+
   private:
 	    double m_out;
   
