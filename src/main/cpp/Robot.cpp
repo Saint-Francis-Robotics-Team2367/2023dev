@@ -6,8 +6,10 @@
 
 // // All Module Includes
 #include "DriveBaseModule.h"
+#include "TshirtCannon.h"
 
 DriveBaseModule drive;
+TshirtCannon tshirtCannon;
 //moved instantiation to h file
 
 
@@ -32,6 +34,7 @@ void Robot::AutonomousPeriodic()
 {
   // testLeftMotor->Set(0.2);
   // testRightMotor->Set(0.2);
+  drive.state = 'i';
 }
 
 

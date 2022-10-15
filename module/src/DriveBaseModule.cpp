@@ -373,11 +373,16 @@ void DriveBaseModule::run() {
         test = false;
       }
       
-    } else {
+    } else if (state == 'i') {
+      tshirtCannon->init();
+	    
+    }
+    } else if (state == 't') {
       //perioidic routines
       gyroDriving();
       test = true;
       stopAuto = true;
+      tshirtCannon->periodic();
     }
 
     //add tuning ones

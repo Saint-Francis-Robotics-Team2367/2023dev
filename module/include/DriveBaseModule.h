@@ -11,10 +11,11 @@
 
 #include <thread>
 #include <chrono>
-#include<mutex>
+#include <mutex>
 #include <atomic>
 
 #include "gyro.h"
+#include "TshirtCannon.h"
 
 #define driverStickPort 0
 #define operatorStickPort 1
@@ -60,7 +61,8 @@ class DriveBaseModule: public frc::PIDOutput{ //needed for gyroPIDDrive implemen
 
   rev::SparkMaxPIDController lPID = lMotor->GetPIDController();
   rev::SparkMaxPIDController rPID = rMotor->GetPIDController();
-
+  
+  TshirtCannon *tshirtCannon = new TshirtCannon();
 
   bool initDriveMotor(rev::CANSparkMax* motor, rev::CANSparkMax* follower, bool invert); //loads initial values into motors such as current limit and phase direction
   bool setPowerBudget(rev::CANSparkMax* motor, float iPeak, float iRated, int limitCycles); //changes the current limits on the motors 
