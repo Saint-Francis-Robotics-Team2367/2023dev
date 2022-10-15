@@ -371,12 +371,10 @@ void DriveBaseModule::run() {
       if(test) {
           autonomousSequence();
         test = false;
-      }
-      
+      }      
     } else if (state == 'i') {
       tshirtCannon->init();
 	    
-    }
     } else if (state == 't') {
       //perioidic routines
       gyroDriving();
