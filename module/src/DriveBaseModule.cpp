@@ -63,7 +63,7 @@ void DriveBaseModule::arcadeDrive(double xSpeedi, double zRotationi) {
         rightMotorOutput = std::copysign((1/(1-yDeadband)) * fabs(rightMotorOutput) - (yDeadband/(1/yDeadband)), rightMotorOutput);
 
     lMotor->Set(leftMotorOutput);
-    rMotor->Set(rightMotorOutput);
+    rMotor->Set(rightMotorOutput); //try SetVoltage
 }
 
 void DriveBaseModule::gyroDriving() {
@@ -79,7 +79,13 @@ void DriveBaseModule::PIDTuning() {
   //double prevTime = frc::Timer::GetFPGATimestamp().value();
   double currentLeftLead = lMotor->GetOutputCurrent();
   double currentRightLead = rMotor->GetOutputCurrent();
+
+  double voltageOverall = lMotor->GetBusVoltage() + rMotor->GetBusVoltage();
+  //do getBusVoltage (returns voltage fed into motor controller)
+
+
   frc::SmartDashboard::PutNumber("Total Current", currentLeftLead+currentRightLead);
+  frc::SmartDashboard::PutNumber("Total Voltage", voltageOverall);
 
   //Making it so you can manually set m_p and positionTotal: m_p is essential with PID, change by an order of magnitude to start run
   double m_P = frc::SmartDashboard::GetNumber("Pd", 1);

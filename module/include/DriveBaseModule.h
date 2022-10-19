@@ -19,9 +19,9 @@
 #define driverStickPort 0
 #define operatorStickPort 1
 
-#define PIDProportional 1
+#define PIDProportional 0.59
 #define PIDIntegral 0
-#define PIDDerivative 0
+#define PIDDerivative 0.28
 #define PIDIZone 0
 
 #define motorInitMaxCurrent 100 // The initial max current setting
@@ -132,8 +132,12 @@ class DriveBaseModule: public frc::PIDOutput{ //needed for gyroPIDDrive implemen
 
   double gyroOffsetVal = 0;
 
-  double getGyroAngleAuto() {
-    return fabs(gyroSource.ahrs->GetAngle() - gyroOffsetVal); //remove fabs in beggining
+  double getGyroAngleAuto() { //will be positive
+    double angle = gyroSource.ahrs->GetAngle();
+    if(angle * gyroOffsetVal < 0) { //if signs are different
+     return fabs(fabs(gyroSource.ahrs->GetAngle()) + fabs(gyroOffsetVal)); //handles the case if it switches from positive to negative of the gyro
+    }
+    return fabs(fabs(gyroSource.ahrs->GetAngle()) - fabs(gyroOffsetVal)); //should alwyas return positive because PIDTurn method requires (changes signs in setpoint)
   }
 
   void PIDTuning();
