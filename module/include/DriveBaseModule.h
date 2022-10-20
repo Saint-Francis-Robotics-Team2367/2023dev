@@ -19,31 +19,36 @@
 #define driverStickPort 0
 #define operatorStickPort 1
 
-#define PIDProportional 0.39
+#define PIDProportional 0.59
 #define PIDIntegral 0
-#define PIDDerivative 2.13
+#define PIDDerivative 0.28
 #define PIDIZone 0
+
+#define driveProportional 0.8
+#define driveIntegral 0
+#define driveDerivitive 0.13
 
 #define motorInitMaxCurrent 100 // The initial max current setting
 #define motorInitRatedCurrent 60 // The inital rated current settings
 #define motorInitLimitCycles 2000 // The inital number of allowed ms at peak current
-#define lInvert true // Inversion setings for sides (invert this if opposite side)
-#define rInvert false 
+#define lInvert false // Inversion setings for sides (invert this if opposite side)
+#define rInvert true 
 
 #define xDeadband 0.025
 #define yDeadband 0.025
 #define centerToWheel 1.08333 //Center of the robot to outer side of the wheel?
 #define PI 3.141592654
 #define wheelDiameter 4 //inches
+#define maxOffsetAngle 1
 
 // #define maxAcc = 7.0
 // #define maxVelocity = 21.0
 
 class DriveBaseModule: public frc::PIDOutput{ //needed for gyroPIDDrive implementation
-  double maxAcc =  7.0;
-  double maxVelocity = 21.0;
+  double maxAcc =  20.0;
+  double maxVelocity = 30.0;
   double currentVelocity = 0;
-  
+  double robTheta = 0;
   
  
   frc::Joystick* driverStick = new frc::Joystick(driverStickPort);
@@ -120,7 +125,7 @@ class DriveBaseModule: public frc::PIDOutput{ //needed for gyroPIDDrive implemen
   gyro gyroSource;
 
   //gyroPIDDrive stuff
-  frc::PIDController rightStickPID{1, 0.0, 0.0, &gyroSource, this}; //maybe adjust periods here
+  frc::PIDController rightStickPID{driveProportional, driveIntegral, driveDerivitive, &gyroSource, this}; //maybe adjust periods here
   void PIDWrite(double output) {
     m_out = output;
   }
@@ -128,6 +133,22 @@ class DriveBaseModule: public frc::PIDOutput{ //needed for gyroPIDDrive implemen
   double GetOutput() {
     return m_out;
   }
+
+  double gyroOffsetVal = 0;
+
+  double getGyroAngleAuto() { //will be positive
+    double angle = gyroSource.ahrs->GetAngle();
+    if(angle * gyroOffsetVal < 0) { //if signs are different
+     return fabs(fabs(gyroSource.ahrs->GetAngle()) + fabs(gyroOffsetVal)); //handles the case if it switches from positive to negative of the gyro
+    }
+    return fabs(fabs(gyroSource.ahrs->GetAngle()) - fabs(gyroOffsetVal)); //should alwyas return positive because PIDTurn method requires (changes signs in setpoint)
+   }
+
+  void PIDTuning();
+
+  void driveBaseTuning();
+  double delta =10;
+  double tuningPrevTime = 0;
 
   private:
 	    double m_out;
