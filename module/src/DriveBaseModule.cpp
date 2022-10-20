@@ -134,6 +134,39 @@ void DriveBaseModule::PIDTuning() {
   }
 }
 
+void DriveBaseModule::driveBaseTuning() {
+
+  double voltageOverall = lMotor->GetBusVoltage() + rMotor->GetBusVoltage();
+  frc::SmartDashboard::PutNumber("Total Voltage", voltageOverall);
+
+  frc::SmartDashboard::PutNumber("Total Current", lMotor->GetOutputCurrent()+rMotor->GetOutputCurrent());
+
+  double d_P = frc::SmartDashboard::GetNumber("d_P", rightStickPID.GetP());
+  frc::SmartDashboard::PutNumber("d_P", d_P);
+  rightStickPID.SetP(d_P);
+
+  double d_D = frc::SmartDashboard::GetNumber("d_D", rightStickPID.GetD());
+  frc::SmartDashboard::PutNumber("d_D", d_D);
+  rightStickPID.SetD(d_D);
+
+  double amountForward = frc::SmartDashboard::GetNumber("amtForward", 0);
+  frc::SmartDashboard::PutNumber("amtForward", amountForward);
+
+  if(driverStick->GetRawButton(1)) {
+    frc::SmartDashboard::PutBoolean("Button Pressed", true);
+    rightStickPID.SetSetpoint(0.3);
+    arcadeDrive(amountForward, GetOutput());
+    frc::SmartDashboard::PutNumber("output", GetOutput());
+  } else {
+    frc::SmartDashboard::PutBoolean("Button Pressed", false);
+    rightStickPID.SetSetpoint(0);
+    arcadeDrive(0, 0);
+    lMotor->StopMotor();
+    rMotor->StopMotor();
+    frc::SmartDashboard::PutNumber("output", GetOutput());
+  }
+}
+
 bool DriveBaseModule::PIDDrive(float totalFeet, bool keepVelocity) {
   //forward movement only *implement backwards movement with if statement if necessary
   float timeElapsed, distanceToDeccelerate, setpoint = 0.0; //currentPosition is the set point
@@ -390,15 +423,15 @@ void DriveBaseModule::initPath() {
   point1.y = 5; 
   straightLinePoints.push_back(point1);
 
-  // radiusTurnPoint rpoint1;
-  // rpoint1.radius = 3; //neg
-  // rpoint1.angle = 180;
-  // radiusTurnPoints.push_back(rpoint1);
+  radiusTurnPoint rpoint1;
+  rpoint1.radius = 3; //neg
+  rpoint1.angle = 180;
+  radiusTurnPoints.push_back(rpoint1);
 
-  // radiusTurnPoint rpoint2;
-  // rpoint2.radius = 0; //neg
-  // rpoint2.angle = -180;
-  // radiusTurnPoints.push_back(rpoint2);
+  radiusTurnPoint rpoint2;
+  rpoint2.radius = 0; //neg
+  rpoint2.angle = -180;
+  radiusTurnPoints.push_back(rpoint2);
 
 
   pathPoint point2; //example
@@ -418,8 +451,10 @@ void DriveBaseModule::initPath() {
   straightLinePoints.push_back(point4);
 
   pathOrder.push_back(true);
+  pathOrder.push_back(false);
   pathOrder.push_back(true);
   pathOrder.push_back(true);
+  pathOrder.push_back(false);
   pathOrder.push_back(true);
 }
 
@@ -514,8 +549,6 @@ void DriveBaseModule::run() {
       stopAuto = false;
       if(test) {
           autonomousSequence();
-          // PIDTurn(180, 3, false);
-          // PIDTurn(-360, 0, false);
         test = false;
       }
       
@@ -531,10 +564,16 @@ void DriveBaseModule::run() {
       stopAuto = true;
     }
 
-    if(state == 'u') {
+    if(state == 'u') { //tuning auto PID's
      PIDTuning();
     }
 
+
+    if(state == 'd') { //tuning drive PID's
+      driveBaseTuning();
+    }
+
+    //will have one for tuning actuator PID's
   
 
     //add tuning ones

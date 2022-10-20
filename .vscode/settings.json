@@ -81,5 +81,5 @@
     "codecvt": "cpp",
     "filesystem": "cpp",
     "*.inc": "cpp"
-  }
+  },
 }

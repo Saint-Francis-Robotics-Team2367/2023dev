@@ -24,6 +24,10 @@
 #define PIDDerivative 0.28
 #define PIDIZone 0
 
+#define driveProportional 0.8
+#define driveIntegral 0
+#define driveDerivitive 0.13
+
 #define motorInitMaxCurrent 100 // The initial max current setting
 #define motorInitRatedCurrent 60 // The inital rated current settings
 #define motorInitLimitCycles 2000 // The inital number of allowed ms at peak current
@@ -121,7 +125,7 @@ class DriveBaseModule: public frc::PIDOutput{ //needed for gyroPIDDrive implemen
   gyro gyroSource;
 
   //gyroPIDDrive stuff
-  frc::PIDController rightStickPID{1, 0.0, 0.0, &gyroSource, this}; //maybe adjust periods here
+  frc::PIDController rightStickPID{driveProportional, driveIntegral, driveDerivitive, &gyroSource, this}; //maybe adjust periods here
   void PIDWrite(double output) {
     m_out = output;
   }
@@ -138,9 +142,11 @@ class DriveBaseModule: public frc::PIDOutput{ //needed for gyroPIDDrive implemen
      return fabs(fabs(gyroSource.ahrs->GetAngle()) + fabs(gyroOffsetVal)); //handles the case if it switches from positive to negative of the gyro
     }
     return fabs(fabs(gyroSource.ahrs->GetAngle()) - fabs(gyroOffsetVal)); //should alwyas return positive because PIDTurn method requires (changes signs in setpoint)
-  }
+   }
 
   void PIDTuning();
+
+  void driveBaseTuning();
   double delta =10;
   double tuningPrevTime = 0;
 
