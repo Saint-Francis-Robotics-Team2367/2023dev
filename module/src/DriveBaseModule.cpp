@@ -84,35 +84,37 @@ void DriveBaseModule::PIDTuning() {
   //do getBusVoltage (returns voltage fed into motor controller)
 
 
-  frc::SmartDashboard::PutNumber("Total Current", currentLeftLead+currentRightLead);
-  frc::SmartDashboard::PutNumber("Total Voltage", voltageOverall);
+  // frc::SmartDashboard::PutNumber("Total Current", currentLeftLead+currentRightLead);
+  // frc::SmartDashboard::PutNumber("Total Voltage", voltageOverall);
+  sb->p.SetDouble(voltageOverall);
 
   //Making it so you can manually set m_p and positionTotal: m_p is essential with PID, change by an order of magnitude to start run
-  double m_P = frc::SmartDashboard::GetNumber("Pd", 1);
+  //double m_P = frc::SmartDashboard::GetNumber("Pd", 1);
+  double m_P = sb->p.GetDouble(PIDProportional);
   //bool isNegative;
   lPID.SetP(m_P);
   rPID.SetP(m_P);
   frc::SmartDashboard::PutNumber("Pd", m_P);
+  sb->p.SetDouble(m_P);
 
-  double m_D = frc::SmartDashboard::GetNumber("D Value", 0);
+  double m_D = sb->d.GetDouble(PIDDerivative);
   //bool isNegative;
   lPID.SetD(m_D);
   rPID.SetD(m_D);
-  frc::SmartDashboard::PutNumber("D Value", m_D);
+  sb->d.SetDouble(m_D);
 
-  double m_I = frc::SmartDashboard::GetNumber("I Value", 0);
+  double m_I = sb->i.GetDouble(PIDIntegral);
   //bool isNegative;
   lPID.SetI(m_I);
   rPID.SetI(m_I);
-  frc::SmartDashboard::PutNumber("I Value", m_I);
+  sb->i.SetDouble(m_I);
 
- double I_Zone = frc::SmartDashboard::GetNumber("I_Zone", 0);
+  double I_Zone = sb->iZone.GetDouble(PIDIZone);
   //bool isNegative;
   lPID.SetIZone(I_Zone);
   rPID.SetIZone(I_Zone);
-  frc::SmartDashboard::PutNumber("I_Zone", I_Zone);
+  sb->i.SetDouble(I_Zone);
 
-  lPID.SetIZone(I_Zone);
 
   double waitTime = frc::SmartDashboard::GetNumber("waitTime", 4);
   frc::SmartDashboard::PutNumber("waitTime", waitTime);

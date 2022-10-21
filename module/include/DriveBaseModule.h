@@ -16,6 +16,8 @@
 
 #include "gyro.h"
 
+#include "Shuffleboard.h"
+
 #define driverStickPort 0
 #define operatorStickPort 1
 
@@ -49,6 +51,8 @@ class DriveBaseModule: public frc::PIDOutput{ //needed for gyroPIDDrive implemen
   double maxVelocity = 30.0;
   double currentVelocity = 0;
   double robTheta = 0;
+
+  Shuffleboard* sb = new Shuffleboard{};
   
  
   frc::Joystick* driverStick = new frc::Joystick(driverStickPort);
