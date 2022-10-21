@@ -86,7 +86,7 @@ void DriveBaseModule::PIDTuning() {
 
   // frc::SmartDashboard::PutNumber("Total Current", currentLeftLead+currentRightLead);
   // frc::SmartDashboard::PutNumber("Total Voltage", voltageOverall);
-  sb->p.SetDouble(voltageOverall);
+  sb->voltage.SetDouble(voltageOverall);
 
   //Making it so you can manually set m_p and positionTotal: m_p is essential with PID, change by an order of magnitude to start run
   //double m_P = frc::SmartDashboard::GetNumber("Pd", 1);
