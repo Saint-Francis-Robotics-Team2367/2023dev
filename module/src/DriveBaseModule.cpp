@@ -139,16 +139,21 @@ void DriveBaseModule::PIDTuning() {
 void DriveBaseModule::driveBaseTuning() {
 
   double voltageOverall = lMotor->GetBusVoltage() + rMotor->GetBusVoltage();
-  frc::SmartDashboard::PutNumber("Total Voltage", voltageOverall);
+  sb->voltage.SetDouble(voltageOverall);
 
-  frc::SmartDashboard::PutNumber("Total Current", lMotor->GetOutputCurrent()+rMotor->GetOutputCurrent());
+  //frc::SmartDashboard::PutNumber("Total Voltage", voltageOverall);
+  //frc::SmartDashboard::PutNumber("Total Current", lMotor->GetOutputCurrent()+rMotor->GetOutputCurrent());
 
-  double d_P = frc::SmartDashboard::GetNumber("d_P", rightStickPID.GetP());
+  //double d_P = frc::SmartDashboard::GetNumber("d_P", rightStickPID.GetP());
+  double d_P = sb->p.GetDouble(rightStickPID.GetP());
   frc::SmartDashboard::PutNumber("d_P", d_P);
+  sb->p.SetDouble(d_P);
   rightStickPID.SetP(d_P);
 
-  double d_D = frc::SmartDashboard::GetNumber("d_D", rightStickPID.GetD());
-  frc::SmartDashboard::PutNumber("d_D", d_D);
+
+  //double d_D = frc::SmartDashboard::GetNumber("d_D", rightStickPID.GetD());
+  double d_D = sb->d.GetDouble(rightStickPID.GetD());
+  sb->d.SetDouble(d_D);
   rightStickPID.SetD(d_D);
 
   double amountForward = frc::SmartDashboard::GetNumber("amtForward", 0);
