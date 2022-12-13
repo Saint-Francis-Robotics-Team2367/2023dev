@@ -15,6 +15,7 @@
 #include <atomic>
 
 #include "gyro.h"
+#include "ElevatorModule.h"
 
 #define driverStickPort 0
 #define operatorStickPort 1
@@ -149,6 +150,10 @@ class DriveBaseModule: public frc::PIDOutput{ //needed for gyroPIDDrive implemen
   void driveBaseTuning();
   double delta =10;
   double tuningPrevTime = 0;
+
+  //Elevator Stuff:
+  ElevatorModule elev = ElevatorModule(Shooter1);
+
 
   private:
 	    double m_out;

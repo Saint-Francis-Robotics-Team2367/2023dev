@@ -551,6 +551,7 @@ void DriveBaseModule::run() {
           autonomousSequence();
         test = false;
       }
+      elev.Periodic(state, 0, 0);
       
     } else {
       test = true;
@@ -562,6 +563,7 @@ void DriveBaseModule::run() {
       gyroDriving();
       test = true;
       stopAuto = true;
+      elev.Periodic(state, driverStick->GetRawAxis(2), driverStick->GetRawAxis(3));
     }
 
     if(state == 'u') { //tuning auto PID's
