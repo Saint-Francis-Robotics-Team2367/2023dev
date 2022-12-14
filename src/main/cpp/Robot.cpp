@@ -5,19 +5,18 @@
 #include "Robot.h"
 
 // // All Module Includes
-#include "DriveBaseModule.h"
+//#include "DriveBaseModule.h"
 
-DriveBaseModule drive;
+//DriveBaseModule drive;
 //moved instantiation to h file
-
-
 
 void Robot::RobotInit()
 {
+  elev->Init();
   //compRobotDrive.periodicInit();
 
   //need drive inits
-  drive.driveThread.detach(); 
+  //drive.driveThread.detach(); 
  
 }
 
@@ -26,7 +25,7 @@ void Robot::RobotPeriodic()
 }
 void Robot::AutonomousInit()
 {
-  drive.state = 'a';
+  //drive.state = 'a';
 }
 void Robot::AutonomousPeriodic()
 {
@@ -37,22 +36,24 @@ void Robot::AutonomousPeriodic()
 
 void Robot::TeleopInit()
 {
-  drive.state = 't'; //add codes in while loops to break if state change
+  //drive.state = 't'; //add codes in while loops to break if state change
 }
 
 void Robot::TeleopPeriodic()
 {
+  elev->Periodic('t', ctr->GetLeftTriggerAxis(), ctr->GetRightTriggerAxis());
 }
 
 void Robot::DisabledInit() {
-  drive.stopAuto = true;
+  elev->Periodic('a', 0, 0);
+  //drive.stopAuto = true;
 }
 void Robot::DisabledPeriodic() {
 }
 
 void Robot::TestInit()
 {
-  drive.state = 'd';
+  //drive.state = 'd';
 }
 
 void Robot::TestPeriodic()

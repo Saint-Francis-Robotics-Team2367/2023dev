@@ -1,16 +1,19 @@
 #include "ElevatorModule.h"
 
 ElevatorModule::ElevatorModule(int motorID) {
-    m_elev1 = new rev::CANSparkMax(motorID, rev::CANSparkMax::MotorType::kBrushless);
+    motorID = m_ID;
 }
 
 double ElevatorModule::ctrMove(double Linput, double Rinput) {
+    frc::SmartDashboard::PutNumber("l", Linput);
+    frc::SmartDashboard::PutNumber("r", Rinput);
+
     double L = Linput;
     double R = Rinput;
     if (Linput < triggerDeadband) {L = 0;}
     if (Rinput < triggerDeadband) {R = 0;}
-    if ((Linput == 0) && (Rinput == 0)) {
-        return -1;
+    if ((Linput == 0) && (Rinput == 0) && STAY_PID) {
+        return -10;
     }
     if (L > R) {return -(L / 4) ;}
     else { return R / 4 ; }
@@ -33,10 +36,12 @@ void ElevatorModule::Periodic(char state, double Linput, double Rinput) {
     if (state == 't') {
         double setpt = ctrMove(Linput, Rinput);
         frc::SmartDashboard::PutNumber("setpt", setpt);
-        if ((setpt == -1) && STAY_PID) {
-            PID_ctr.SetReference(0, rev::ControlType::kPosition);
+        if ((setpt < -1) && STAY_PID) {
+            frc::SmartDashboard::PutNumber("PID", 1);
+            PID_ctr.SetReference(enc.GetPosition(), rev::ControlType::kPosition);
         } else {
-            m_elev1->Set(setpt / 2);
+            frc::SmartDashboard::PutNumber("PID", 0);
+            m_elev1->Set(setpt);
         }
     } else if (state == 'a') {
         m_elev1->Set(0);

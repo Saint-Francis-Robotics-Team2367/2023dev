@@ -5,13 +5,17 @@
 #pragma once
 
 #include <frc/TimedRobot.h>
-
+#include "ElevatorModule.h"
+#include <frc/XboxController.h>
 
 class Robot : public frc::TimedRobot {
 
 
 
  public:
+  ElevatorModule* elev = new ElevatorModule(3);
+  frc::XboxController* ctr = new frc::XboxController(0);
+
   void RobotInit() override;
   void RobotPeriodic() override;
 
