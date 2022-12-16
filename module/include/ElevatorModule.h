@@ -36,7 +36,7 @@ class ElevatorModule {
     //Gravity PID
     bool stay_still; //If first loop after no input
     double curr_reference; //No input ->start position
-    bool GRAV_PID = false; //Overarching gravity PID switch
+    bool GRAV_PID = true; //Overarching gravity PID switch
     
 
     double grav_Kp = 0.5;
