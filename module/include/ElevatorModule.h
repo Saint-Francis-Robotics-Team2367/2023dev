@@ -14,15 +14,36 @@
 
 
 #define triggerDeadband 0.1
-#define STAY_PID 1
+
 
 
 
 class ElevatorModule {
     int run_counter = 0;
 
+
+
+
     public:
-    int m_ID;
+    //Spec Setup
+    int m_ID = 10;
+    double enc_range = 295; //Encoderwise top to bottom range
+    double start_position = 0; //Start position encoderwise
+    double enc_range_safety = 5; // Safety range from top/bottom bound for stopping
+
+
+
+    //Gravity PID
+    bool stay_still; //If first loop after no input
+    double curr_reference; //No input ->start position
+    bool GRAV_PID = false; //Overarching gravity PID switch
+    
+
+    double grav_Kp = 0.5;
+    double grav_Ki = 0.0;
+    double grav_Kd = 0.5;
+
+
     ElevatorModule(int motorID);
     bool invert = false;
     double conv_factor = 2.37;
@@ -31,7 +52,7 @@ class ElevatorModule {
     rev::SparkMaxPIDController PID_ctr = m_elev1->GetPIDController();
 
 
-
+    double boundStop(double input, double position);
     double ctrMove(double Linput, double Rinput);
     void Init();
     void Periodic(char state, double Linput, double Rinput);

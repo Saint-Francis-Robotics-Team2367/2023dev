@@ -22,6 +22,7 @@ void Robot::RobotInit()
 
 void Robot::RobotPeriodic()
 {
+  //elev->Periodic('t', ctr->GetLeftTriggerAxis(), ctr->GetRightTriggerAxis());
 }
 void Robot::AutonomousInit()
 {
