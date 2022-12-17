@@ -13,7 +13,7 @@ class Robot : public frc::TimedRobot {
 
 
  public:
-  ElevatorModule* elev = new ElevatorModule(3);
+  ElevatorModule* elev = new ElevatorModule(10);
   frc::XboxController* ctr = new frc::XboxController(0);
 
   void RobotInit() override;

@@ -42,11 +42,11 @@ void Robot::TeleopInit()
 
 void Robot::TeleopPeriodic()
 {
-  elev->Periodic('t', ctr->GetLeftTriggerAxis(), ctr->GetRightTriggerAxis());
+  elev->TeleopPeriodic(ctr->GetLeftTriggerAxis(), ctr->GetRightTriggerAxis());
 }
 
 void Robot::DisabledInit() {
-  elev->Periodic('a', 0, 0);
+  elev->m_elev1->Set(0);
   //drive.stopAuto = true;
 }
 void Robot::DisabledPeriodic() {
