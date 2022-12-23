@@ -6,8 +6,11 @@
 
 // // All Module Includes
 #include "DriveBaseModule.h"
+#include "PiModule.h"
 
 DriveBaseModule drive;
+PiModule pi = PiModule(0);
+
 //moved instantiation to h file
 
 
@@ -18,11 +21,14 @@ void Robot::RobotInit()
 
   //need drive inits
   drive.driveThread.detach(); 
- 
+  pi.pi_thread.detach();
+  //std::thread pi_thread = std::thread(&PiModule::start_server, pi);
 }
 
 void Robot::RobotPeriodic()
 {
+  frc::SmartDashboard::PutNumber("PI", pi.get_distance());
+  
 }
 void Robot::AutonomousInit()
 {
@@ -46,6 +52,7 @@ void Robot::TeleopPeriodic()
 
 void Robot::DisabledInit() {
   drive.stopAuto = true;
+  pi.stop_server();
 }
 void Robot::DisabledPeriodic() {
 }

@@ -5,6 +5,8 @@
 #pragma once
 
 #include <frc/TimedRobot.h>
+#include <thread>
+#include <frc/smartdashboard/SmartDashboard.h>
 
 
 class Robot : public frc::TimedRobot {
