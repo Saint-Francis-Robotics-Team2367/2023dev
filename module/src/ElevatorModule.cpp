@@ -54,9 +54,11 @@ void ElevatorModule::Init() {
 
 void ElevatorModule::TeleopPeriodic(double Linput, double Rinput) {
         frc::SmartDashboard::PutNumber("position", getPos());
+        frc::SmartDashboard::PutNumber("height", height);
         double output = manualMove(Linput, Rinput);
-        elevatorMotor->Set(output);
-        height = getPos();
+        // elevatorMotor->Set(output);
+        // height = getPos();
+        setPos(height + output);
         
 }
 

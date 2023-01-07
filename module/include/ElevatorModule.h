@@ -26,14 +26,14 @@ class ElevatorModule {
 
     //constants
     double kElevatorMinHeight = 0.0;
-    double kElevatorMaxHeight = 12;
+    double kElevatorMaxHeight = 11;
 
 
     //no feedforward in this case...
     double pDown = 0.5;
     double dDown = 0.0;
 
-    double pUp = 1.0; 
+    double pUp = 0.8; 
     double dUp = 0.0;
 
     bool oneRun = false;
