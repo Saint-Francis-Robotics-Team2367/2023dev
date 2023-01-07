@@ -32,6 +32,7 @@ void Robot::AutonomousPeriodic()
 {
   // testLeftMotor->Set(0.2);
   // testRightMotor->Set(0.2);
+  elev->AutoPeriodic();
 }
 
 
@@ -46,7 +47,7 @@ void Robot::TeleopPeriodic()
 }
 
 void Robot::DisabledInit() {
-  elev->m_elev1->Set(0);
+  //elev->elevatorMotor->Set(0);
   //drive.stopAuto = true;
 }
 void Robot::DisabledPeriodic() {

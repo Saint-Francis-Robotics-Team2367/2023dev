@@ -7,7 +7,7 @@
 
 class ElevatorModule {
     int run_counter = 0;
-
+    double slowCoefficient = 4;
     public:
     //Conversion Factors:
     double pitch_diameter = 1.273;
@@ -16,36 +16,38 @@ class ElevatorModule {
 
     //Mech/Electronics Setup
     int m_ID = 10;
-    double enc_range = 17; //Encoderwise top to bottom range
-    double start_position = 0; //Start position encoderwise
-    double enc_range_safety = 0.2; // Safety range from top/bottom bound for stopping
-    bool invert = false;
 
-    //Gravity PID
-    double PID_range = 0.4;
-    bool bound = true; //Start Elevator at bottom position
-    bool stay_still; //If first loop after no input
-    double curr_reference; //No input ->start position
-    bool GRAV_PID = true; //Overarching gravity PID switch
     
-    //Gravity PID Constants
-    double grav_Kp = 0.5;
-    double grav_Ki = 0.0;
-    double grav_Kd = 0.5;
+    rev::CANSparkMax* elevatorMotor = new rev::CANSparkMax(m_ID, rev::CANSparkMax::MotorType::kBrushless);
+    rev::SparkMaxRelativeEncoder enc = elevatorMotor->GetEncoder();
+    rev::SparkMaxPIDController elevatorPID = elevatorMotor->GetPIDController();
+
+    double height = 0; //starting the elevator at 0 (no absolute encoder)
+
+    //constants
+    double kElevatorMinHeight = 0.0;
+    double kElevatorMaxHeight = 12;
+
+
+    //no feedforward in this case...
+    double pDown = 0.5;
+    double dDown = 0.0;
+
+    double pUp = 1.0; 
+    double dUp = 0.0;
+
+    bool oneRun = false;
+
 
     ElevatorModule(int motorID);
-    rev::CANSparkMax* m_elev1 = new rev::CANSparkMax(m_ID, rev::CANSparkMax::MotorType::kBrushless);
-    rev::SparkMaxRelativeEncoder enc = m_elev1->GetEncoder();
-    rev::SparkMaxPIDController PID_ctr = m_elev1->GetPIDController();
-
-    double boundStop(double input, double position);
-    double ctrMove(double Linput, double Rinput);
     void Init();
     void TeleopPeriodic(double Linput, double Rinput);
-    void AutoPeriodic(double inp_setpt);
+    void AutoPeriodic();
     double getPos();
-
-    
+    void resetPos();
+    double manualMove(double Linput, double Rinput);
+    void setPos(double setpoint);
+    double getHeight();
 
 
 };
