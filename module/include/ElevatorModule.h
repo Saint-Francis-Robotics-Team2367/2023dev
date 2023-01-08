@@ -7,7 +7,7 @@
 
 class ElevatorModule {
     int run_counter = 0;
-    double slowCoefficient = 1;
+    double slowCoefficient = 4;
     public:
     //Conversion Factors:
     double pitch_diameter = 1.273;
