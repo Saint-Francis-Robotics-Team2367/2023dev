@@ -44,6 +44,7 @@ void ElevatorModule::setPos(double setpoint) {
 }
 
 void ElevatorModule::Init() {
+   //elevatorMotor->SetIdleMode(rev::CANSparkMax::IdleMode::kBrake);
     elevatorPID.SetP(pUp);
     elevatorPID.SetD(dUp);
     //enc.SetPosition(0);

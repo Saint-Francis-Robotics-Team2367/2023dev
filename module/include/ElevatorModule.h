@@ -7,7 +7,7 @@
 
 class ElevatorModule {
     int run_counter = 0;
-    double slowCoefficient = 4;
+    double slowCoefficient = 1;
     public:
     //Conversion Factors:
     double pitch_diameter = 1.273;
@@ -15,8 +15,8 @@ class ElevatorModule {
     double conversion_factor = pitch_circum / (30); //Ratio 30:1
 
     //Mech/Electronics Setup
-    int m_ID = 10;
-
+   // int m_ID = 10;
+    int m_ID = 15;
     
     rev::CANSparkMax* elevatorMotor = new rev::CANSparkMax(m_ID, rev::CANSparkMax::MotorType::kBrushless);
     rev::SparkMaxRelativeEncoder enc = elevatorMotor->GetEncoder();
@@ -30,10 +30,10 @@ class ElevatorModule {
 
 
     //no feedforward in this case...
-    double pDown = 0.5;
+    double pDown = 0.8;
     double dDown = 0.0;
 
-    double pUp = 0.8; 
+    double pUp = 1.0; 
     double dUp = 0.0;
 
     bool oneRun = false;
